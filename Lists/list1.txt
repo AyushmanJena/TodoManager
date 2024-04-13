@@ -1,0 +1,4 @@
+1$Star the Repo$5
+2$report bugs$2
+3$have lots of fun$10
+4$don't forget to learn new stuff$3

@@ -1,0 +1,23 @@
+// when you start the program
+it will store all the data from the list files into class data
+class structre will be like :
+class AllTasks{
+    class List{
+        class Task{
+            String name[];
+            int priority;
+            // deadline date
+            // constructors and functions to assign values to the task
+        }
+        select task();
+        function to add new task;
+        function to delete task;
+        function to modify the task
+    }
+    select list();
+    function to create lists
+    function to delete lists
+}
+
+AllTasks : select list : task done or not
+
