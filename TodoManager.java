@@ -1,4 +1,7 @@
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class TodoManager {
@@ -27,6 +30,9 @@ public class TodoManager {
 
     // to set the lists names into an array of files
     public TodoManager(){
+        updateAllListsArray();
+    }
+    public static void updateAllListsArray(){
         String folderPath = "TodoManager/Lists";
         File folder = new File(folderPath);
         File[] files = folder.listFiles();
@@ -68,33 +74,160 @@ public class TodoManager {
         }
     }
 
-
     // set the file you want to open into the selectedTask array
     static boolean setSelectedTask(){
         Scanner sc = new Scanner(System.in);
 
-        System.out.println("\nSelect List to Open : ");
-        System.out.println("0 : EXIT");
+        while(true){
+            System.out.println("\nSelect List to Open : ");
+            System.out.println("0 : EXIT");
+            displayLists();
+            System.out.println(allLists.length+1 + " : MODIFY LISTS");
+            System.out.print(">> ");
+            int ch = sc.nextInt();
+            if(ch == 0){
+                return false;
+            }
+            if(ch == allLists.length+1){
+                modifyLists();
+                continue;
+            }
+            File file = allLists[ch-1];
+            selectedListName = file.getName();
+            int i = 1;
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                while (br.readLine() != null) {
+                    i++;
+                }
+            } catch (IOException e) {
+                System.err.println("Error reading the file: " + e.getMessage());
+            }
+            // set size of selected Task
+            selectedTask = new Task[i-1];
+            setTaskToArray();
+            break;
+        }
+        return true;
+    }
+
+    public static void modifyLists(){
+        while(true){
+            System.out.println("0 : Back     1 : Add New List     2 : Delete List     3 : Rename List ");
+            System.out.print(">> ");
+            Scanner sc = new Scanner(System.in);
+            int ch = sc.nextInt();
+
+            switch(ch){
+                case 0 :
+                    return;
+                case 1 :
+                    addList();
+                    break;
+                case 2 :
+                    deleteList();
+                    break;
+                case 3 :
+                    renameList();
+                    break;
+            }
+        }
+    }
+
+    public static void addList(){
+        // remember to update allLists[]
+        String directoryPath = "TodoManager/Lists";
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter new List Name : ");
+        String newFileName = sc.nextLine();
+        String fileName = newFileName+ ".txt";
+        for(File f : allLists){
+            if((fileName.compareTo(f.getName())) == 0){
+                System.out.println("List already Exists!");
+                return;
+            }
+        }
+        try {
+            Path directory = Paths.get(directoryPath);
+            Path filePath = Paths.get(directory.toString(), fileName);
+            Files.createFile(filePath);
+
+            System.out.println("(C)");
+        } catch (IOException e) {
+            System.out.println("ERROR occurred");
+            return;
+        }
+        // code to update the allLists
+        updateAllListsArray();
+    }
+
+    public static void deleteList(){
+        System.out.println("0 : BACK");
         displayLists();
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Select List to Delete : ");
         System.out.print(">> ");
         int ch = sc.nextInt();
-        if(ch == 0){
-            return false;
+
+        // double checking
+        System.out.println("WARNING : ALL THE TASKS IN THE LIST WILL BE DELETED !!!");
+        System.out.println("To confirm type \"confirm\" below : ");
+        System.out.print(">> ");
+        String confirm = sc.next();
+        if(confirm.compareTo("confirm")!= 0){
+            System.out.println("DELETION TERMINATED");
+            ch = 0;
         }
-        File file = allLists[ch-1];
-        selectedListName = file.getName();
-        int i = 1;
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            while (br.readLine() != null) {
-                i++;
+
+        if(ch == 0){return;}
+
+        String str = allLists[ch-1].getName();
+
+        String filePath = "TodoManager/Lists/"+str;
+
+        // Create a File object representing the file
+        File file = new File(filePath);
+        // Check if the file exists
+        if (file.exists()) {
+            if (file.delete()) {
+                System.out.println("(D)");
+            } else {
+                System.out.println("Deletion failed");
             }
-        } catch (IOException e) {
-            System.err.println("Error reading the file: " + e.getMessage());
+        } else {
+            System.out.println("file does not exist // should not occur");
         }
-        // set size of selected Task
-        selectedTask = new Task[i-1];
-        setTaskToArray();
-        return true;
+        updateAllListsArray();
+    }
+
+    public static void renameList(){
+        System.out.println("0 : BACK");
+        displayLists();
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Select List to Rename : ");
+        System.out.print(">> ");
+        int ch = sc.nextInt();
+        if(ch == 0){return;}
+
+        String str = allLists[ch-1].getName();
+
+        System.out.print("Enter New Name : ");
+        sc.nextLine();
+        String newName = sc.nextLine();
+
+        String currentFilePath = "TodoManager/Lists/"+str;
+
+        // Specify the new file path
+        String newFilePath = "TodoManager/Lists/"+newName+".txt";
+
+        // Create File objects for both the current and new files
+        File currentFile = new File(currentFilePath);
+        File newFile = new File(newFilePath);
+
+        boolean success = currentFile.renameTo(newFile);
+        if(!success){
+            System.out.println("Rename Failed :(");
+        }
+        updateAllListsArray();
     }
 
     public static void setTaskToArray() {
@@ -117,12 +250,10 @@ public class TodoManager {
 
     // display the selected task array whenever needed
     static void displaySelectedTask(){
-        int i = 1;
         for(Task t : selectedTask){
             System.out.println(t.taskNum +" : "+t.taskName+ " : " + t.priority);
         }
     }
-
 
     //save the current instance of selected list to the txt file
     static void saveListToFile(){
